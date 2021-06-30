@@ -159,9 +159,8 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
         result(hasPermissions)
     }
     
+    
     private func createCalendar(_ call: FlutterMethodCall, _ result: FlutterResult) {
-        EKSource* localSource;
-
         let arguments = call.arguments as! Dictionary<String, AnyObject>
         let calendar = EKCalendar.init(for: EKEntityType.event, eventStore: eventStore)
         do {
@@ -192,10 +191,11 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
             // }
 
             // https://stackoverflow.com/questions/15706969/how-to-create-and-save-ekcalendar-on-ios-6/15980556#15980556
-            for (EKSource *source in self.eventStore.sources)
+            EKSource* localSource = nil;
+            for (EKSource *source in eventStore.sources)
             {
-                if (source.sourceType == EKSourceTypeCalDAV && 
-                [source.title isEqualToString:@"iCloud"]) //Couldn't find better way, if there is, then tell me too. :)
+                if (source.sourceType == EKSourceTypeCalDAV && source.title == "iCloud")
+                // [source.title isEqualToString:@"iCloud"]) Couldn't find better way, if there is, then tell me too. :)
                 {
                     localSource = source;
                     break;
@@ -204,7 +204,7 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
 
             if (localSource == nil)
             {
-                for (EKSource *source in self.eventStore.sources)
+                for (EKSource *source in eventStore.sources)
                 {
                     if (source.sourceType == EKSourceTypeLocal)
                     {
@@ -215,7 +215,7 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
             }
 
             do {
-                calendar.source = localSource
+                calendar.source = localSource;
                 
                 try eventStore.saveCalendar(calendar, commit: true)
                 result(calendar.calendarIdentifier)
