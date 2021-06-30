@@ -191,10 +191,10 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
             // }
 
             // https://stackoverflow.com/questions/15706969/how-to-create-and-save-ekcalendar-on-ios-6/15980556#15980556
-            EKSource* localSource = nil;
-            for (EKSource *source in eventStore.sources)
+            var localSource: EKSource?
+            for source in eventStore.sources
             {
-                if (source.sourceType == EKSourceTypeCalDAV && source.title == "iCloud")
+                if (source.sourceType == EKSourceType.calDAV && source.title == "iCloud")
                 // [source.title isEqualToString:@"iCloud"]) Couldn't find better way, if there is, then tell me too. :)
                 {
                     localSource = source;
@@ -204,24 +204,27 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
 
             if (localSource == nil)
             {
-                for (EKSource *source in eventStore.sources)
+                for source in eventStore.sources
                 {
-                    if (source.sourceType == EKSourceTypeLocal)
+                    if (source.sourceType == EKSourceType.local)
                     {
                         localSource = source;
                         break;
                     }
+                }
+                else {
+                    result(FlutterError(code: self.genericError, message: "Local calendar was not found.", details: nil))
                 }
             }
 
             do {
                 calendar.source = localSource;
                 
-                try eventStore.saveCalendar(calendar, commit: true)
+                try! eventStore.saveCalendar(calendar, commit: true)
                 result(calendar.calendarIdentifier)
             }
             catch {
-                result(FlutterError(code: self.genericError, message: "Local calendar was not found.", details: nil))
+                result(FlutterError(code: self.genericError, message: "Source calendar was not found.", details: nil))
             }
         }
         catch {
