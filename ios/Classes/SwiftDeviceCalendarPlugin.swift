@@ -160,6 +160,8 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
     }
     
     private func createCalendar(_ call: FlutterMethodCall, _ result: FlutterResult) {
+        EKSource* localSource;
+
         let arguments = call.arguments as! Dictionary<String, AnyObject>
         let calendar = EKCalendar.init(for: EKEntityType.event, eventStore: eventStore)
         do {
@@ -172,16 +174,53 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
             else {
                 calendar.cgColor = UIColor(red: 255, green: 0, blue: 0, alpha: 0).cgColor // Red colour as a default
             }
+
+            // Error: Local calendar was not found.
+            // https://github.com/builttoroam/device_calendar/issues/223
+            // https://github.com/builttoroam/device_calendar/pull/224
+            // 
+            // let localSources = eventStore.sources.filter { $0.sourceType == .local }
             
-            let localSources = eventStore.sources.filter { $0.sourceType == .local }
-            
-            if (!localSources.isEmpty) {
-                calendar.source = localSources.first
+            // if (!localSources.isEmpty) {
+            //     calendar.source = localSources.first
+                
+            //     try eventStore.saveCalendar(calendar, commit: true)
+            //     result(calendar.calendarIdentifier)
+            // }
+            // else {
+            //     result(FlutterError(code: self.genericError, message: "Local calendar was not found.", details: nil))
+            // }
+
+            // https://stackoverflow.com/questions/15706969/how-to-create-and-save-ekcalendar-on-ios-6/15980556#15980556
+            for (EKSource *source in self.eventStore.sources)
+            {
+                if (source.sourceType == EKSourceTypeCalDAV && 
+                [source.title isEqualToString:@"iCloud"]) //Couldn't find better way, if there is, then tell me too. :)
+                {
+                    localSource = source;
+                    break;
+                }
+            }
+
+            if (localSource == nil)
+            {
+                for (EKSource *source in self.eventStore.sources)
+                {
+                    if (source.sourceType == EKSourceTypeLocal)
+                    {
+                        localSource = source;
+                        break;
+                    }
+                }
+            }
+
+            do {
+                calendar.source = localSource
                 
                 try eventStore.saveCalendar(calendar, commit: true)
                 result(calendar.calendarIdentifier)
             }
-            else {
+            catch {
                 result(FlutterError(code: self.genericError, message: "Local calendar was not found.", details: nil))
             }
         }
