@@ -211,21 +211,17 @@ public class SwiftDeviceCalendarPlugin: NSObject, FlutterPlugin {
                         localSource = source;
                         break;
                     }
-                }
-                else {
-                    result(FlutterError(code: self.genericError, message: "Local calendar was not found.", details: nil))
+                    else
+                    {
+                        result(FlutterError(code: self.genericError, message: "Local calendar was not found.", details: nil))
+                    }
                 }
             }
 
-            do {
-                calendar.source = localSource;
-                
-                try! eventStore.saveCalendar(calendar, commit: true)
-                result(calendar.calendarIdentifier)
-            }
-            catch {
-                result(FlutterError(code: self.genericError, message: "Source calendar was not found.", details: nil))
-            }
+            calendar.source = localSource;
+            
+            try! eventStore.saveCalendar(calendar, commit: true)
+            result(calendar.calendarIdentifier)
         }
         catch {
             eventStore.reset()
